@@ -1,0 +1,46 @@
+version: '3'
+networks:
+    ek:
+volumes:
+  es-data:
+    driver: local
+services:
+  elasticsearch:
+    container_name: elasticsearch
+    build:
+      context: .
+      dockerfile: ./docker/elasticsearch/Dockerfile
+      args:
+        ELK_VERSION: 7.11.1
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=es-cluster-7
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xmx256m -Xms256m"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - ek
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+  kibana:
+    container_name: kibana
+    build:
+      context: .
+      dockerfile: ./docker/kibana/Dockerfile
+      args:
+        ELK_VERSION: 7.11.1
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    # volumes:
+      # - ./docker/kibana/config/:/usr/share/kibana/config:ro
+    ports:
+      - "5601:5601"
+    networks:
+      - ek
+    depends_on:
+      - elasticsearch
