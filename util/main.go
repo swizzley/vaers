@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/araddon/dateparse"
 	"github.com/gocarina/gocsv"
 	"github.com/olivere/elastic/v7"
 )
@@ -25,7 +24,7 @@ func main() {
 	}
 	defer f.Close()
 
-	events := []*VaersEvent{}
+	events := []VaersEvent{}
 
 	err = gocsv.UnmarshalFile(f, &events)
 	if err != nil {
@@ -34,34 +33,61 @@ func main() {
 
 	fmt.Println("COUNT:", len(events))
 	for _, e := range events {
-		j, _ := json.Marshal(e)
+
+		var j []byte
+		layout := "01/02/2006"
 
 		if len(e.VAERSID) > 0 {
-			layout, _ := dateparse.ParseFormat(e.RECVDATE)
-			e.RECVTime, _ = time.Parse(e.RECVDATE, layout)
+			if len(e.RECVDATE) > 0 {
+				t, err := time.Parse("01/02/2006", e.RECVDATE)
+				if err != nil {
+					panic(err)
+				}
+				e.RECVDATETime = t
+			}
 
-			layout, _ = dateparse.ParseFormat(e.RPTDATE)
-			e.RPTTime, _ = time.Parse(e.RPTDATE, layout)
+			if len(e.RPTDATE) > 0 {
+				e.RPTDATETime, err = time.Parse(layout, e.RPTDATE)
+				if err != nil {
+					panic(err)
+				}
+			}
 
-			layout, _ = dateparse.ParseFormat(e.DATEDIED)
-			e.DATEDIEDTime, _ = time.Parse(e.DATEDIED, layout)
+			if len(e.DATEDIED) > 0 {
+				e.DATEDIEDTime, err = time.Parse(layout, e.DATEDIED)
+				if err != nil {
+					panic(err)
+				}
+			}
 
-			layout, _ = dateparse.ParseFormat(e.ONSETDATE)
-			e.ONSETDATETime, _ = time.Parse(e.ONSETDATE, layout)
+			if len(e.ONSETDATE) > 0 {
+				e.ONSETDATETime, err = time.Parse(layout, e.ONSETDATE)
+				if err != nil {
+					panic(err)
+				}
+			}
 
-			layout, _ = dateparse.ParseFormat(e.TODAYSDATE)
-			e.TODAYSDATETime, _ = time.Parse(e.TODAYSDATE, layout)
+			if len(e.TODAYSDATE) > 0 {
+				e.TODAYSDATETime, err = time.Parse(layout, e.TODAYSDATE)
+				if err != nil {
+					panic(err)
+				}
+			}
 
-			layout, _ = dateparse.ParseFormat(e.VAXDATE)
-			e.VAXDATETime, _ = time.Parse(e.VAXDATE, layout)
+			if len(e.VAXDATE) > 0 {
+				e.VAXDATETime, err = time.Parse(layout, e.VAXDATE)
+				if err != nil {
+					panic(err)
+				}
+			}
+
+			j, _ = json.Marshal(e)
 
 			_, err = elasticClient.Index().Index("vaers").Type("event").Id(strings.ToLower(e.VAERSID)).BodyJson(string(j)).Do(context.Background())
 			if err != nil {
 				panic(err)
 			}
 
-		} else {
-			fmt.Println(string(j))
 		}
 	}
 
@@ -70,36 +96,31 @@ func main() {
 }
 
 type VaersEvent struct {
-	VAERSID  string `csv:"VAERS_ID"`
-	RECVDATE string `csv:"RECVDATE"`
-	RECVTime time.Time
-
-	STATE   string `csv:"STATE"`
-	AGEYRS  int    `csv:"AGE_YRS"`
-	CAGEYR  int    `csv:"CAGE_YR"`
-	CAGEMO  string `csv:"CAGE_MO"`
-	SEX     string `csv:"SEX"`
-	RPTDATE string `csv:"RPT_DATE"`
-	RPTTime time.Time
-
-	SYMPTOMTEXT  string `csv:"SYMPTOM_TEXT"`
-	DIED         string `csv:"DIED"`
-	DATEDIED     string `csv:"DATEDIED"`
-	DATEDIEDTime time.Time
-
-	LTHREAT     string `csv:"L_THREAT"`
-	ERVISIT     string `csv:"ER_VISIT"`
-	HOSPITAL    string `csv:"HOSPITAL"`
-	HOSPDAYS    string `csv:"HOSPDAYS"`
-	XSTAY       string `csv:"X_STAY"`
-	DISABLE     string `csv:"DISABLE"`
-	RECOVD      string `csv:"RECOVD"`
-	VAXDATE     string `csv:"VAX_DATE"`
-	VAXDATETime time.Time
-
-	ONSETDATE     string `csv:"ONSET_DATE"`
-	ONSETDATETime time.Time
-
+	VAERSID        string `csv:"VAERS_ID"`
+	RECVDATE       string `csv:"RECVDATE"`
+	RECVDATETime   time.Time
+	STATE          string `csv:"STATE"`
+	AGEYRS         int    `csv:"AGE_YRS"`
+	CAGEYR         int    `csv:"CAGE_YR"`
+	CAGEMO         string `csv:"CAGE_MO"`
+	SEX            string `csv:"SEX"`
+	RPTDATE        string `csv:"RPT_DATE"`
+	RPTDATETime    time.Time
+	SYMPTOMTEXT    string `csv:"SYMPTOM_TEXT"`
+	DIED           string `csv:"DIED"`
+	DATEDIED       string `csv:"DATEDIED"`
+	DATEDIEDTime   time.Time
+	LTHREAT        string `csv:"L_THREAT"`
+	ERVISIT        string `csv:"ER_VISIT"`
+	HOSPITAL       string `csv:"HOSPITAL"`
+	HOSPDAYS       string `csv:"HOSPDAYS"`
+	XSTAY          string `csv:"X_STAY"`
+	DISABLE        string `csv:"DISABLE"`
+	RECOVD         string `csv:"RECOVD"`
+	VAXDATE        string `csv:"VAX_DATE"`
+	VAXDATETime    time.Time
+	ONSETDATE      string `csv:"ONSET_DATE"`
+	ONSETDATETime  time.Time
 	NUMDAYS        int    `csv:"NUMDAYS"`
 	LABDATA        string `csv:"LAB_DATA"`
 	VADMINBY       string `csv:"V_ADMINBY"`
@@ -112,9 +133,8 @@ type VaersEvent struct {
 	FORMVERS       int    `csv:"FORM_VERS"`
 	TODAYSDATE     string `csv:"TODAYS_DATE"`
 	TODAYSDATETime time.Time
-
-	BIRTHDEFECT string `csv:"BIRTH_DEFECT"`
-	OFCVISIT    string `csv:"OFC_VISIT"`
-	EREDVISIT   string `csv:"ER_ED_VISIT"`
-	ALLERGIES   string `csv:"ALLERGIES"`
+	BIRTHDEFECT    string `csv:"BIRTH_DEFECT"`
+	OFCVISIT       string `csv:"OFC_VISIT"`
+	EREDVISIT      string `csv:"ER_ED_VISIT"`
+	ALLERGIES      string `csv:"ALLERGIES"`
 }
