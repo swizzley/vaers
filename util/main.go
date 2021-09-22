@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -17,33 +18,45 @@ func main() {
 		panic(err)
 	}
 
-	fd, err := os.Open("../data/all/2021VAERSDATA.csv")
+	for yr := 1990; yr <= time.Now().Year(); yr++ {
+		loadData(elasticClient, fmt.Sprintf("%v", yr))
+	}
+	loadData(elasticClient, "NonDomestic")
+
+	defer elasticClient.Stop()
+
+}
+
+func loadData(elasticClient *elastic.Client, yr string) {
+	fmt.Println("LOADING...", yr)
+
+	fd, err := os.Open(fmt.Sprintf("../data/all/%vVAERSDATA.csv", yr))
 	if err != nil {
 		panic(err)
 	}
-	defer fd.Close()
+
 	events := []VaersEvent{}
 	err = gocsv.UnmarshalFile(fd, &events)
 	if err != nil {
 		panic(err)
 	}
 
-	fs, err := os.Open("../data/all/2021VAERSSYMPTOMS.csv")
+	fs, err := os.Open(fmt.Sprintf("../data/all/%vVAERSSYMPTOMS.csv", yr))
 	if err != nil {
 		panic(err)
 	}
-	defer fs.Close()
+
 	symp := []Symptoms{}
 	err = gocsv.UnmarshalFile(fs, &symp)
 	if err != nil {
 		panic(err)
 	}
 
-	fv, err := os.Open("../data/all/2021VAERSVAX.csv")
+	fv, err := os.Open(fmt.Sprintf("../data/all/%vVAERSVAX.csv", yr))
 	if err != nil {
 		panic(err)
 	}
-	defer fv.Close()
+
 	vax := []Vax{}
 	err = gocsv.UnmarshalFile(fv, &vax)
 	if err != nil {
@@ -126,8 +139,9 @@ func main() {
 		}
 	}
 
-	defer elasticClient.Stop()
-
+	fd.Close()
+	fs.Close()
+	fv.Close()
 }
 
 type VaersEvent struct {
