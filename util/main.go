@@ -39,7 +39,7 @@ func main() {
 
 		if len(e.VAERSID) > 0 {
 			if len(e.RECVDATE) > 0 {
-				t, err := time.Parse("01/02/2006", e.RECVDATE)
+				t, err := time.Parse(layout, e.RECVDATE)
 				if err != nil {
 					panic(err)
 				}
