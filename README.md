@@ -8,9 +8,27 @@ The data seems to change constantly, and I mean it decrements, which should be i
 returning ~21,000 results, and then 5min later it was return 18,000 results. This combined data should have been 
 all results, but it is clearly a tiny subset. 
 
+In my second attempt at cataloging the data directly from the data download feed, the real data problems begin to emerge.
+Events where symptoms were DEATH, but not marked as a death, and or have no death date was one of the most obvious.
+The second was there are obviously typos, in that some people are marked to have died in 2001, but they were reported 
+in 2021. 
+
 # Conclusion
-  * The data is broken. Raw data shows 7390 rows. Rows with Vaers ID = 5457. 
-  * It does appear that something like 85-90% had no current illness. 
-  * mRNA is the most deadly by far
+  * The data is still very bad
+  * Not all deaths are labeled deaths
+  * Not all deaths have death dates
+  * There is no consistent date value at all, meaning there is no single date field that is valid among all events
+  * Miscarriage is not marked as death or birth defect 
+  * There are 2 age fields and neither is always present 
+  * Lots and lots of null values everywhere 
+  * Thousands of unknown sex 
+  * Seemingly invalid state Codes `XB` and `GU` 
+  * **THOUSANDS OF DEATHS LABELED AS A SYMPTOM INSTEAD OF LABELING REACTION AS DEATH**
   
 ![visualization](dashboard.png "Title")
+
+
+# Usage
+
+  1. ```make run```
+  1. ```cd vaers-data-loader && go run main.go -mod vendor```
