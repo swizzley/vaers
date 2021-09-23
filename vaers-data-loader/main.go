@@ -128,7 +128,10 @@ func loadData(elasticClient *elastic.Client, yr string) {
 				}
 			}
 
+			e.indexTime()
+
 			if e.DATEDIEDTime.After(time.Time{}) ||
+				e.RECOVD == "N" ||
 				strings.Contains(strings.ToLower(e.Symptoms.Symptom1), "death") ||
 				strings.Contains(strings.ToLower(e.Symptoms.Symptom2), "death") ||
 				strings.Contains(strings.ToLower(e.Symptoms.Symptom3), "death") ||
@@ -155,7 +158,8 @@ func loadData(elasticClient *elastic.Client, yr string) {
 				strings.Contains(strings.ToLower(e.Symptoms.Symptom4), "miscarriage") ||
 				strings.Contains(strings.ToLower(e.Symptoms.Symptom5), "miscarriage") ||
 				strings.Contains(strings.ToLower(e.SYMPTOMTEXT), "miscarriage") {
-				e.BIRTHDEFECT = "Miscarriage"
+				e.BIRTHDEFECT = "Y"
+				e.DIED = "Y"
 			}
 
 			j, _ = json.Marshal(e)
@@ -174,7 +178,36 @@ func loadData(elasticClient *elastic.Client, yr string) {
 	fv.Close()
 }
 
+func (e *VaersEvent) indexTime() {
+	now := time.Now()
+	e.IndexTime = time.Now()
+
+	if e.RECVDATETime.Before(e.IndexTime) {
+		e.IndexTime = e.RECVDATETime
+	}
+	if e.RECVDATETime.Before(e.RPTDATETime) {
+		e.IndexTime = e.RPTDATETime
+	}
+	if e.RECVDATETime.Before(e.DATEDIEDTime) {
+		e.IndexTime = e.DATEDIEDTime
+	}
+	if e.RECVDATETime.Before(e.ONSETDATETime) {
+		e.IndexTime = e.ONSETDATETime
+	}
+	if e.RECVDATETime.Before(e.TODAYSDATETime) {
+		e.IndexTime = e.TODAYSDATETime
+	}
+	if e.RECVDATETime.Before(e.VAXDATETime) {
+		e.IndexTime = e.VAXDATETime
+	}
+
+	if e.IndexTime == now {
+		e.IndexTime = time.Date(2021, 1, 20, 1, 1, 1, 1, time.Local)
+	}
+}
+
 type VaersEvent struct {
+	IndexTime      time.Time
 	VAERSID        string `csv:"VAERS_ID"`
 	RECVDATE       string `csv:"RECVDATE"`
 	RECVDATETime   time.Time
