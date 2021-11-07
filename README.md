@@ -30,5 +30,11 @@ in 2021.
 
 # Usage
 
+  1. open a browser and download the capcha protected file from [vaers](https://vaers.hhs.gov/data/datasets.html?).
+  1. Unzip the file to `./data/`
   1. ```make run```
-  1. ```cd vaers-data-loader && go run main.go -mod vendor```
+  1. ```cd vaers-data-loader && go build -o vaers-data-loader```
+  1. `./vaers-data-loader`
+  1. open [localhost:5601](http://localhost:5601)
+  1. navigate in the menu to elastic -> Manage -> Management menu -> saved objects -> import -> import -> select the dashboard file in the vaers directory `vaers/dashboard-objects.ndjson` use default settings and click Import
+  1. navigate to the dashboard or begin searching the data in the discover section
