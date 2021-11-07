@@ -19,6 +19,7 @@ func main() {
 	}
 
 	for yr := 1990; yr <= time.Now().Year(); yr++ {
+		// for yr := 2021; yr <= time.Now().Year(); yr++ {
 		loadData(elasticClient, fmt.Sprintf("%v", yr))
 	}
 	loadData(elasticClient, "NonDomestic")
@@ -63,7 +64,7 @@ func loadData(elasticClient *elastic.Client, yr string) {
 		panic(err)
 	}
 
-	for _, e := range events {
+	for i, e := range events {
 
 		var j []byte
 		layout := "01/02/2006"
@@ -165,10 +166,13 @@ func loadData(elasticClient *elastic.Client, yr string) {
 			j, _ = json.Marshal(e)
 			body := string(j)
 
-			_, err = elasticClient.Index().Index("vaers").Type("event").Id(strings.ToLower(e.VAERSID)).BodyJson(body).Do(context.Background())
+			// fmt.Println(string(j))
+
+			rslt, err := elasticClient.Index().Index("vaers").Type("event").Id(strings.ToLower(e.VAERSID)).BodyJson(body).Do(context.Background())
 			if err != nil {
 				panic(err)
 			}
+			fmt.Println(rslt.Result, rslt.Id, i, "of", len(events))
 
 		}
 	}
