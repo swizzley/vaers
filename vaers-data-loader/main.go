@@ -132,7 +132,6 @@ func loadData(elasticClient *elastic.Client, yr string) {
 			e.indexTime()
 
 			if e.DATEDIEDTime.After(time.Time{}) ||
-				e.RECOVD == "N" ||
 				strings.Contains(strings.ToLower(e.Symptoms.Symptom1), "death") ||
 				strings.Contains(strings.ToLower(e.Symptoms.Symptom2), "death") ||
 				strings.Contains(strings.ToLower(e.Symptoms.Symptom3), "death") ||
